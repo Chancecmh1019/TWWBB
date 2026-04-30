@@ -1,0 +1,8 @@
+{
+  "name": "臺灣警察簡訊報案小幫手",
+  "description": "提供快速且精準的手機簡訊報案系統，自動定位並產生簡訊內容至對應縣市警察機構。",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
