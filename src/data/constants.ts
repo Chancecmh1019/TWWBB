@@ -69,60 +69,46 @@ export const ReportCategories: ReportCategory[] = [
     title: "違規停車",
     iconName: "car",
     items: [
-      { id: "p1", label: "紅線違停", requiresPlate: true },
-      { id: "p2", label: "人行道違停", requiresPlate: true },
-      { id: "p3", label: "併排停車", requiresPlate: true },
-      { id: "p4", label: "佔用身心障礙車位", requiresPlate: true },
-      { id: "p5", label: "網狀線違停", requiresPlate: true },
-      { id: "p6", label: "阻礙交通出入", requiresPlate: true },
-      { id: "p7", label: "佔用消防通道", requiresPlate: true },
-      { id: "p8", label: "公車停靠區違停", requiresPlate: true }
+      { id: "v1", label: "於紅線違規停車", requiresPlate: true },
+      { id: "v2", label: "長時間佔用黃線停車", requiresPlate: true },
+      { id: "v3", label: "違規併排停車", requiresPlate: true },
+      { id: "v4", label: "於交岔路口處違規停車", requiresPlate: true },
+      { id: "v5", label: "於黃網狀線違規停車", requiresPlate: true },
+      { id: "v6", label: "於槽化線違規停車", requiresPlate: true },
+      { id: "v7", label: "於卸貨格違規停車", requiresPlate: true },
+      { id: "v8", label: "於人行道違規停車", requiresPlate: true },
+      { id: "v9", label: "於騎樓違規停車", requiresPlate: true },
+      { id: "v10", label: "於騎樓綠色標線違規停車", requiresPlate: true },
+      { id: "v11", label: "於行人穿越道違規停車", requiresPlate: true },
+      { id: "v12", label: "未緊靠右側停車", requiresPlate: true },
+      { id: "v13", label: "未順向停車", requiresPlate: true },
+      { id: "v14", label: "於公車站牌十公尺內停車", requiresPlate: true },
+      { id: "v15", label: "於消防栓五公尺內停車", requiresPlate: true }
     ]
   },
   {
-    id: "traffic",
-    title: "交通違規",
+    id: "occupy",
+    title: "車位佔用",
     iconName: "alertTriangle",
     items: [
-      { id: "t1", label: "闖紅燈", requiresPlate: true },
-      { id: "t2", label: "逆向行駛", requiresPlate: true },
-      { id: "t3", label: "跨越雙黃線", requiresPlate: true },
-      { id: "t4", label: "蛇行/危險駕駛", requiresPlate: true },
-      { id: "t5", label: "未戴安全帽", requiresPlate: true }
+      { id: "o1", label: "佔用機車停車格", requiresPlate: true },
+      { id: "o2", label: "佔用汽車停車格", requiresPlate: true },
+      { id: "o3", label: "佔用公車停靠區", requiresPlate: true },
+      { id: "o4", label: "佔用身障停車格", requiresPlate: true }
     ]
   },
   {
-    id: "noise",
-    title: "妨害安寧",
-    iconName: "volume2",
-    items: [
-      { id: "n1", label: "深夜喧嘩/鄰居家暴噪音", requiresPlate: false },
-      { id: "n2", label: "施工噪音", requiresPlate: false },
-      { id: "n3", label: "營業場所噪音", requiresPlate: false },
-      { id: "n4", label: "改裝車輛噪音", requiresPlate: true }
-    ]
-  },
-  {
-    id: "safety",
-    title: "治安維護",
+    id: "roadhog",
+    title: "路霸佔用",
     iconName: "shieldAlert",
     items: [
-      { id: "s1", label: "發現可疑人士", requiresPlate: false },
-      { id: "s2", label: "聚眾鬥毆", requiresPlate: false },
-      { id: "s3", label: "疑似竊盜行為", requiresPlate: false },
-      { id: "s4", label: "疑似詐騙行為", requiresPlate: false },
-      { id: "s5", label: "發現可疑物品", requiresPlate: false }
-    ]
-  },
-  {
-    id: "other",
-    title: "其他協助",
-    iconName: "helpCircle",
-    items: [
-      { id: "o1", label: "號誌故障", requiresPlate: false },
-      { id: "o2", label: "道路散落物", requiresPlate: false },
-      { id: "o3", label: "路樹倒塌/積水", requiresPlate: false },
-      { id: "o4", label: "迷失老人/兒童協助", requiresPlate: false }
+      { id: "h1", label: "佔用人行道 (營業/雜物/活動)", requiresPlate: false },
+      { id: "h2", label: "佔用騎樓 (營業/雜物/活動)", requiresPlate: false },
+      { id: "h3", label: "佔用騎樓綠色標線", requiresPlate: false },
+      { id: "h4", label: "佔用路肩 (營業/雜物/活動)", requiresPlate: false },
+      { id: "h5", label: "佔用道路 (營業/雜物/活動)", requiresPlate: false },
+      { id: "h6", label: "佔用汽車停車格 (非車輛)", requiresPlate: false },
+      { id: "h7", label: "佔用機車停車格 (非車輛)", requiresPlate: false }
     ]
   }
 ];
