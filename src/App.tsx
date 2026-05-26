@@ -23,6 +23,7 @@ export default function App() {
   const [manualAddress, setManualAddress] = useState('');
   const [plateNumber, setPlateNumber] = useState('');
   const [description, setDescription] = useState('');
+  const [includeWarning, setIncludeWarning] = useState(true);
 
   // Sync auto address with manual when found
   useEffect(() => {
@@ -30,6 +31,18 @@ export default function App() {
       setManualAddress(autoAddress);
     }
   }, [autoAddress]);
+
+  const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    // add hyphen automatically after English letters if transition to numbers and no hyphen exists
+    if (!val.includes('-')) {
+       const match = val.match(/^([A-Z]{2,3})([0-9]{1,4})$/);
+       if (match) {
+          val = `${match[1]}-${match[2]}`;
+       }
+    }
+    setPlateNumber(val);
+  };
 
   // Derive phone number
   const phoneNumber = city ? PoliceNumbers[city] || "" : "";
@@ -40,13 +53,18 @@ export default function App() {
     // Construct SMS Text
     let smsText = `【報案類型】${selectedCategory?.title} - ${selectedItem?.label}\n`;
     smsText += `【發生地點】${finalAddress}\n`;
-    if (selectedItem?.requiresPlate && plateNumber.trim()) {
+    if (plateNumber.trim()) {
       smsText += `【車牌號碼】${plateNumber.trim().toUpperCase()}\n`;
     }
     if (description.trim()) {
       smsText += `【補充說明】${description.trim()}\n`;
     }
     smsText += `\n請警察機關協助派員前往處理，感謝您。\n`;
+    
+    if (includeWarning) {
+      smsText += `\n【備註】報案人已於現場錄影蒐證。若未見警員切實到場查處，或僅以電話通知違規人移車而不予開單，將依法把蒐證影片與報案紀錄上傳至網路平台(如爆料公社)及1999市民專線交由公眾檢視，請依法嚴格執行，切勿瀆職。\n\n`;
+    }
+    
     smsText += `(座標定位：${latitude?.toFixed(6) || '未取得'}, ${longitude?.toFixed(6) || '未取得'})`;
 
     if (!phoneNumber) {
@@ -64,6 +82,7 @@ export default function App() {
     setSelectedItem(null);
     setPlateNumber('');
     setDescription('');
+    setIncludeWarning(true);
   };
 
   return (
@@ -223,7 +242,7 @@ export default function App() {
                 <div className="space-y-5">
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">
-                      發生地點 <span className="text-red-500">*</span>
+                      檢舉地點資訊 (可手動修改) <span className="text-red-500">*</span>
                     </label>
                     <input 
                       type="text" 
@@ -233,15 +252,18 @@ export default function App() {
                     />
                   </div>
 
-                  {selectedItem.requiresPlate && (
+                  {(selectedCategory?.id === 'parking' || selectedCategory?.id === 'occupy' || selectedCategory?.id === 'noise' || selectedItem?.label.includes('車')) && (
                     <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">
-                        車牌號碼 <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-end justify-between mb-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                          車牌號碼 (選填)
+                        </label>
+                        <span className="text-[9px] text-gray-400 font-medium">填寫有時只會致電車主，不填將迫使警員到場</span>
+                      </div>
                       <input 
                         type="text" 
                         value={plateNumber}
-                        onChange={(e) => setPlateNumber(e.target.value)}
+                        onChange={handlePlateChange}
                         placeholder="例如：ABC-1234"
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black uppercase tracking-wider"
                       />
@@ -256,9 +278,24 @@ export default function App() {
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="簡述情況"
-                      rows={3}
+                      rows={2}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black resize-none"
                     />
+                  </div>
+                  
+                  <div className="flex items-start bg-red-50/50 p-3 rounded-xl border border-red-100">
+                     <div className="flex items-center h-5">
+                       <input 
+                         type="checkbox" 
+                         id="includeWarning" 
+                         checked={includeWarning} 
+                         onChange={(e) => setIncludeWarning(e.target.checked)}
+                         className="w-4 h-4 text-red-600 bg-white border-red-300 rounded focus:ring-red-500 focus:ring-2"
+                       />
+                     </div>
+                     <label htmlFor="includeWarning" className="ml-3 text-xs font-medium text-red-800">
+                       附加聲明：要求員警確實出勤，並警告若不處理將上傳影片至網路公審以防吃案。
+                     </label>
                   </div>
                 </div>
               </div>
@@ -266,7 +303,7 @@ export default function App() {
               <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col space-y-3 shrink-0">
                 <button 
                   onClick={handleSend}
-                  disabled={(!manualAddress.trim()) || (selectedItem.requiresPlate && !plateNumber.trim())}
+                  disabled={!manualAddress.trim()}
                   className="w-full bg-black text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all text-sm uppercase tracking-widest active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-30 disabled:shadow-none disabled:active:scale-100"
                 >
                   <Send className="w-4 h-4" />
