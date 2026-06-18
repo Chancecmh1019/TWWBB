@@ -21,17 +21,73 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<ReportItem | null>(null);
   
   const [manualAddress, setManualAddress] = useState('');
+  const [isManuallyEdited, setIsManuallyEdited] = useState(false);
+  const [manualCoordinates, setManualCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
+  
   const [plateNumber, setPlateNumber] = useState('');
   const [description, setDescription] = useState('');
   const [includeWarning, setIncludeWarning] = useState(true);
   const [vehicleCount, setVehicleCount] = useState<'single' | 'multiple'>('single');
 
-  // Sync auto address with manual when found
+  // Sync auto address with manual when found (only if not manually edited)
   useEffect(() => {
-    if (autoAddress) {
+    if (autoAddress && !isManuallyEdited) {
       setManualAddress(autoAddress);
     }
-  }, [autoAddress]);
+  }, [autoAddress, isManuallyEdited]);
+
+  // Geocode function: convert address to coordinates
+  const geocodeAddress = async (address: string) => {
+    if (!address.trim()) return;
+    
+    setGeocoding(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=tw`,
+        {
+          headers: {
+            'Accept-Language': 'zh-TW,zh;q=0.9',
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('地理編碼失敗');
+      }
+
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const { lat, lon } = data[0];
+        setManualCoordinates({ lat: parseFloat(lat), lng: parseFloat(lon) });
+      } else {
+        console.warn('無法找到該地址的座標');
+        setManualCoordinates(null);
+      }
+    } catch (err) {
+      console.error('地理編碼錯誤:', err);
+      setManualCoordinates(null);
+    } finally {
+      setGeocoding(false);
+    }
+  };
+
+  // Handle manual address change with debounced geocoding
+  useEffect(() => {
+    if (isManuallyEdited && manualAddress.trim()) {
+      const timer = setTimeout(() => {
+        geocodeAddress(manualAddress);
+      }, 1000); // Wait 1 second after user stops typing
+      
+      return () => clearTimeout(timer);
+    }
+  }, [manualAddress, isManuallyEdited]);
+
+  const handleManualAddressChange = (newAddress: string) => {
+    setManualAddress(newAddress);
+    setIsManuallyEdited(true);
+  };
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
@@ -57,9 +113,13 @@ export default function App() {
   const handleSend = () => {
     const finalAddress = manualAddress.trim() || '未提供正確地址';
     
+    // Use manual coordinates if address was manually edited, otherwise use GPS coordinates
+    const finalLatitude = isManuallyEdited && manualCoordinates ? manualCoordinates.lat : latitude;
+    const finalLongitude = isManuallyEdited && manualCoordinates ? manualCoordinates.lng : longitude;
+    
     // Construct SMS Text
     let smsText = `【發生地點】${finalAddress}\n`;
-    smsText += `【座標定位】${latitude?.toFixed(6) || '未取得'}, ${longitude?.toFixed(6) || '未取得'}\n`;
+    smsText += `【座標定位】${finalLatitude?.toFixed(6) || '未取得'}, ${finalLongitude?.toFixed(6) || '未取得'}\n`;
     smsText += `【報案類型】${selectedCategory?.title} - ${selectedItem?.label}\n`;
     
     if (vehicleCount === 'multiple') {
@@ -160,13 +220,30 @@ export default function App() {
                    )}
                 </div>
                 
-                <input 
-                  type="text" 
-                  value={manualAddress}
-                  onChange={(e) => setManualAddress(e.target.value)}
-                  placeholder={loading ? '自動辨識中...' : '請輸入或修改詳細地址'}
-                  className="w-full bg-white/70 border border-gray-200/50 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black/5"
-                />
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    value={manualAddress}
+                    onChange={(e) => handleManualAddressChange(e.target.value)}
+                    placeholder={loading ? '自動辨識中...' : '請輸入或修改詳細地址'}
+                    className="w-full bg-white/70 border border-gray-200/50 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black/5"
+                  />
+                  {geocoding && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                {isManuallyEdited && manualCoordinates && (
+                  <div className="text-[9px] text-green-600 font-mono tracking-wider mt-1">
+                    ✓ 已轉換座標: {manualCoordinates.lat.toFixed(6)}, {manualCoordinates.lng.toFixed(6)}
+                  </div>
+                )}
+                {isManuallyEdited && !manualCoordinates && !geocoding && manualAddress.trim() && (
+                  <div className="text-[9px] text-amber-600 font-mono tracking-wider mt-1">
+                    ⚠ 無法自動轉換座標，將使用GPS位置
+                  </div>
+                )}
             </div>
           </div>
         </section>
@@ -257,12 +334,29 @@ export default function App() {
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block">
                       檢舉地點資訊 (可手動修改) <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      type="text" 
-                      value={manualAddress}
-                      onChange={(e) => setManualAddress(e.target.value)}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black"
-                    />
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        value={manualAddress}
+                        onChange={(e) => handleManualAddressChange(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-black"
+                      />
+                      {geocoding && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <RefreshCw className="w-4 h-4 text-gray-400 animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    {isManuallyEdited && manualCoordinates && (
+                      <div className="text-[10px] text-green-600 font-mono tracking-wider mt-2 bg-green-50 px-3 py-2 rounded-lg">
+                        ✓ 已自動轉換座標: {manualCoordinates.lat.toFixed(6)}, {manualCoordinates.lng.toFixed(6)}
+                      </div>
+                    )}
+                    {isManuallyEdited && !manualCoordinates && !geocoding && manualAddress.trim() && (
+                      <div className="text-[10px] text-amber-600 font-mono tracking-wider mt-2 bg-amber-50 px-3 py-2 rounded-lg">
+                        ⚠ 無法自動轉換座標，將使用GPS位置
+                      </div>
+                    )}
                   </div>
 
                   {(selectedCategory?.id === 'parking' || selectedCategory?.id === 'occupy' || selectedCategory?.id === 'noise' || selectedItem?.label.includes('車')) && (
